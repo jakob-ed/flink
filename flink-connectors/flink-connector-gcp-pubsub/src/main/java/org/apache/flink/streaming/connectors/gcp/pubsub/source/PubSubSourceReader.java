@@ -32,6 +32,8 @@ public class PubSubSourceReader<T>
         super(
                 elementsQueue,
                 new PubSubSourceFetcherManager<>(elementsQueue, splitReaderSupplier::get),
+                //                TODO: see kafka source for how split-specific info is passed to
+                // splitreader
                 recordEmitter,
                 config,
                 context);

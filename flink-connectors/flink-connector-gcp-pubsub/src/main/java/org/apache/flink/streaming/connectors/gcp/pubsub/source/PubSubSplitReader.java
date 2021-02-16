@@ -73,7 +73,9 @@ public class PubSubSplitReader<T> implements SplitReader<Tuple2<T, Long>, PubSub
     }
 
     @Override
-    public void handleSplitsChanges(SplitsChange<PubSubSplit> splitsChanges) {}
+    public void handleSplitsChanges(SplitsChange<PubSubSplit> splitsChanges) {
+        System.out.println("handleSplitsChanges was called");
+    }
 
     @Override
     public void wakeUp() {}

@@ -41,7 +41,6 @@ import org.apache.flink.util.Preconditions;
 
 import com.google.auth.Credentials;
 import com.google.cloud.pubsub.v1.Subscriber;
-import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.ReceivedMessage;
 
@@ -310,10 +309,7 @@ public class PubSubSource<OUT> extends RichSourceFunction<OUT>
                 int maxMessagesPerPull, Duration perRequestTimeout, int retries) {
             this.pubSubSubscriberFactory =
                     new DefaultPubSubSubscriberFactory(
-                            ProjectSubscriptionName.format(projectName, subscriptionName),
-                            retries,
-                            perRequestTimeout,
-                            maxMessagesPerPull);
+                            retries, perRequestTimeout, maxMessagesPerPull);
             return this;
         }
 
@@ -342,11 +338,7 @@ public class PubSubSource<OUT> extends RichSourceFunction<OUT>
 
             if (pubSubSubscriberFactory == null) {
                 pubSubSubscriberFactory =
-                        new DefaultPubSubSubscriberFactory(
-                                ProjectSubscriptionName.format(projectName, subscriptionName),
-                                3,
-                                Duration.ofSeconds(15),
-                                100);
+                        new DefaultPubSubSubscriberFactory(3, Duration.ofSeconds(15), 100);
             }
 
             return new PubSubSource<>(

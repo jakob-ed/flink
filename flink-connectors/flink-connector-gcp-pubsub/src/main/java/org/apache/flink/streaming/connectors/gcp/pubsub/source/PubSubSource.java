@@ -80,7 +80,8 @@ public class PubSubSource<OUT>
                     try {
                         return new PubSubSplitReader<>(
                                 deserializationSchema,
-                                pubSubSubscriberFactory.getSubscriber(credentials));
+                                pubSubSubscriberFactory.getSubscriber(
+                                        credentials, projectSubscriptionName));
                     } catch (IOException e) {
                         e.printStackTrace();
                         return null;
@@ -182,10 +183,7 @@ public class PubSubSource<OUT>
                 int maxMessagesPerPull, Duration perRequestTimeout, int retries) {
             this.pubSubSubscriberFactory =
                     new DefaultPubSubSubscriberFactory(
-                            ProjectSubscriptionName.format(projectName, subscriptionName),
-                            retries,
-                            perRequestTimeout,
-                            maxMessagesPerPull);
+                            retries, perRequestTimeout, maxMessagesPerPull);
             return this;
         }
 

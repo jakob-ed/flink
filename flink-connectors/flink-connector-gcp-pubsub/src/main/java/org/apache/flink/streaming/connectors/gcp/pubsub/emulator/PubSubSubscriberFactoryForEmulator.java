@@ -22,7 +22,6 @@ import org.apache.flink.streaming.connectors.gcp.pubsub.common.PubSubSubscriber;
 import org.apache.flink.streaming.connectors.gcp.pubsub.common.PubSubSubscriberFactory;
 
 import com.google.auth.Credentials;
-import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PullRequest;
 import com.google.pubsub.v1.SubscriberGrpc;
 import io.grpc.ManagedChannel;
@@ -38,27 +37,21 @@ import java.time.Duration;
  */
 public class PubSubSubscriberFactoryForEmulator implements PubSubSubscriberFactory {
     private final String hostAndPort;
-    private final String projectSubscriptionName;
     private final int retries;
     private final Duration timeout;
     private final int maxMessagesPerPull;
 
     public PubSubSubscriberFactoryForEmulator(
-            String hostAndPort,
-            String project,
-            String subscription,
-            int retries,
-            Duration timeout,
-            int maxMessagesPerPull) {
+            String hostAndPort, int retries, Duration timeout, int maxMessagesPerPull) {
         this.hostAndPort = hostAndPort;
         this.retries = retries;
         this.timeout = timeout;
         this.maxMessagesPerPull = maxMessagesPerPull;
-        this.projectSubscriptionName = ProjectSubscriptionName.format(project, subscription);
     }
 
     @Override
-    public PubSubSubscriber getSubscriber(Credentials credentials) throws IOException {
+    public PubSubSubscriber getSubscriber(Credentials credentials, String projectSubscriptionName)
+            throws IOException {
         ManagedChannel managedChannel =
                 NettyChannelBuilder.forTarget(hostAndPort)
                         .usePlaintext() // This is 'Ok' because this is ONLY used for testing.

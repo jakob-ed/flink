@@ -38,21 +38,19 @@ public class DefaultPubSubSubscriberFactory implements PubSubSubscriberFactory {
     private final int retries;
     private final Duration timeout;
     private final int maxMessagesPerPull;
-    private final String projectSubscriptionName;
 
     public DefaultPubSubSubscriberFactory(
-            String projectSubscriptionName,
-            int retries,
-            Duration pullTimeout,
-            int maxMessagesPerPull) {
+            int retries, Duration pullTimeout, int maxMessagesPerPull) {
         this.retries = retries;
         this.timeout = pullTimeout;
         this.maxMessagesPerPull = maxMessagesPerPull;
-        this.projectSubscriptionName = projectSubscriptionName;
     }
 
     @Override
-    public PubSubSubscriber getSubscriber(Credentials credentials) throws IOException {
+    public PubSubSubscriber getSubscriber(Credentials credentials, String projectSubscriptionName)
+            //    public PubSubSubscriber getSubscriber(Credentials credentials, String
+            // projectSubscriptionName)
+            throws IOException {
         ManagedChannel channel =
                 NettyChannelBuilder.forTarget(SubscriberStubSettings.getDefaultEndpoint())
                         .negotiationType(NegotiationType.TLS)
