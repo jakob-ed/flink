@@ -133,7 +133,6 @@ public class EmulatedPubSubNewSourceTest extends GCloudUnitTestBase {
                 PubSubSource.newBuilder()
                         .withDeserializationSchema(new SimpleStringSchemaWithStopMarkerDetection())
                         .withProjectName(PROJECT_NAME)
-                        //                        TODO: pass two subscription names!
                         .withSubscriptionName(SUBSCRIPTION_NAME)
                         .withCredentials(EmulatorCredentials.getInstance())
                         .withPubSubSubscriberFactory(
@@ -143,7 +142,7 @@ public class EmulatedPubSubNewSourceTest extends GCloudUnitTestBase {
                                         2,
                                         Duration.ofSeconds(1), // timeout
                                         3))
-                        // TODO: necessary?
+                        // TODOI: necessary?
                         .setProps(new Properties())
                         .build();
 

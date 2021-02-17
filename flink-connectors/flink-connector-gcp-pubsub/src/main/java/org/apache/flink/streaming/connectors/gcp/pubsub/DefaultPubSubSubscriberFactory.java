@@ -68,4 +68,9 @@ public class DefaultPubSubSubscriberFactory implements PubSubSubscriberFactory {
         return new BlockingGrpcPubSubSubscriber(
                 projectSubscriptionName, channel, stub, pullRequest, retries, timeout);
     }
+
+    @Override
+    public PubSubSubscriber getSubscriber(Credentials credentials) throws IOException {
+        throw new IOException();
+    }
 }

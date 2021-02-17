@@ -43,7 +43,7 @@ import com.google.pubsub.v1.ProjectSubscriptionName;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Properties;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import static com.google.cloud.pubsub.v1.SubscriptionAdminSettings.defaultCredentialsProviderBuilder;
 
@@ -54,16 +54,19 @@ public class PubSubSource<OUT>
     protected final PubSubSubscriberFactory pubSubSubscriberFactory;
     private final Properties props;
     private final Credentials credentials;
+    private final String projectSubscriptionName;
 
     PubSubSource(
             PubSubDeserializationSchema<OUT> deserializationSchema,
             PubSubSubscriberFactory pubSubSubscriberFactory,
             Properties props,
-            Credentials credentials) {
+            Credentials credentials,
+            String projectSubscriptionName) {
         this.deserializationSchema = deserializationSchema;
         this.pubSubSubscriberFactory = pubSubSubscriberFactory;
         this.props = props;
         this.credentials = credentials;
+        this.projectSubscriptionName = projectSubscriptionName;
     }
 
     @Override
@@ -75,8 +78,8 @@ public class PubSubSource<OUT>
     public SourceReader<OUT, PubSubSplit> createReader(SourceReaderContext readerContext) {
         FutureCompletingBlockingQueue<RecordsWithSplitIds<Tuple2<OUT, Long>>> elementsQueue =
                 new FutureCompletingBlockingQueue<>();
-        Supplier<PubSubSplitReader<OUT>> splitReaderSupplier =
-                () -> {
+        Function<String, PubSubSplitReader<OUT>> splitReaderSupplier =
+                (String projectSubscriptionName) -> {
                     try {
                         return new PubSubSplitReader<>(
                                 deserializationSchema,
@@ -100,14 +103,14 @@ public class PubSubSource<OUT>
     @Override
     public SplitEnumerator<PubSubSplit, PubSubEnumeratorCheckpoint> createEnumerator(
             SplitEnumeratorContext<PubSubSplit> enumContext) {
-        return new PubSubSourceEnumerator(enumContext);
+        return new PubSubSourceEnumerator(enumContext, projectSubscriptionName);
     }
 
     @Override
     public SplitEnumerator<PubSubSplit, PubSubEnumeratorCheckpoint> restoreEnumerator(
             SplitEnumeratorContext<PubSubSplit> enumContext,
             PubSubEnumeratorCheckpoint checkpoint) {
-        return new PubSubSourceEnumerator(enumContext);
+        return new PubSubSourceEnumerator(enumContext, projectSubscriptionName);
     }
 
     @Override
@@ -205,18 +208,18 @@ public class PubSubSource<OUT>
 
             if (pubSubSubscriberFactory == null) {
                 pubSubSubscriberFactory =
-                        new DefaultPubSubSubscriberFactory(
-                                ProjectSubscriptionName.format(projectName, subscriptionName),
-                                3,
-                                Duration.ofSeconds(15),
-                                100);
+                        new DefaultPubSubSubscriberFactory(3, Duration.ofSeconds(15), 100);
             }
 
             // TODO:
             //                    new GuavaFlinkConnectorRateLimiter(),
             //                    messagePerSecondRateLimit);
             return new PubSubSource(
-                    deserializationSchema, pubSubSubscriberFactory, props, credentials);
+                    deserializationSchema,
+                    pubSubSubscriberFactory,
+                    props,
+                    credentials,
+                    ProjectSubscriptionName.format(projectName, subscriptionName));
         }
     }
 

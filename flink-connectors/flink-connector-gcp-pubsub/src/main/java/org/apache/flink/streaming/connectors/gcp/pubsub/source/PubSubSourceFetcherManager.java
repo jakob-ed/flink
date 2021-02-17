@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /** */
 public class PubSubSourceFetcherManager<T>
@@ -39,7 +39,7 @@ public class PubSubSourceFetcherManager<T>
 
     public PubSubSourceFetcherManager(
             FutureCompletingBlockingQueue<RecordsWithSplitIds<Tuple2<T, Long>>> elementsQueue,
-            Supplier<SplitReader<Tuple2<T, Long>, PubSubSplit>> splitReaderSupplier) {
+            Function<String, SplitReader<Tuple2<T, Long>, PubSubSplit>> splitReaderSupplier) {
         super(elementsQueue, splitReaderSupplier);
     }
 

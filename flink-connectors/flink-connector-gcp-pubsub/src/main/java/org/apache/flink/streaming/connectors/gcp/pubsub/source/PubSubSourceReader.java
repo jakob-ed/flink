@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 /** */
 public class PubSubSourceReader<T>
@@ -24,16 +24,14 @@ public class PubSubSourceReader<T>
 
     public PubSubSourceReader(
             FutureCompletingBlockingQueue<RecordsWithSplitIds<Tuple2<T, Long>>> elementsQueue,
-            Supplier<PubSubSplitReader<T>> splitReaderSupplier,
+            Function<String, PubSubSplitReader<T>> splitReaderSupplier,
             RecordEmitter<Tuple2<T, Long>, T, PubSubSplitState> recordEmitter,
             Configuration config,
             SourceReaderContext context) {
         //		TODO: right super constructor?
         super(
                 elementsQueue,
-                new PubSubSourceFetcherManager<>(elementsQueue, splitReaderSupplier::get),
-                //                TODO: see kafka source for how split-specific info is passed to
-                // splitreader
+                new PubSubSourceFetcherManager<>(elementsQueue, splitReaderSupplier),
                 recordEmitter,
                 config,
                 context);
@@ -51,7 +49,7 @@ public class PubSubSourceReader<T>
     @Override
     public List<PubSubSplit> snapshotState(long checkpointId) {
         // maybe match number of currently dealt-out splits (even though they are all the same)?
-        return Arrays.asList(new PubSubSplit());
+        return Arrays.asList(new PubSubSplit(""));
     }
 
     @Override

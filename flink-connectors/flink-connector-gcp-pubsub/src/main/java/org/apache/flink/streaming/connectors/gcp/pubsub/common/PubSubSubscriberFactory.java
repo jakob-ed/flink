@@ -33,6 +33,8 @@ public interface PubSubSubscriberFactory extends Serializable {
      * Creates a new SubscriberStub using the EventLoopGroup and credentials. If the SubscriberStub
      * uses a EventLoopGroup, as many Grpc classes do, this EventLoopGroup should be used.
      */
+    PubSubSubscriber getSubscriber(Credentials credentials) throws IOException;
+
     PubSubSubscriber getSubscriber(Credentials credentials, String projectSubscriptionName)
             throws IOException;
 }

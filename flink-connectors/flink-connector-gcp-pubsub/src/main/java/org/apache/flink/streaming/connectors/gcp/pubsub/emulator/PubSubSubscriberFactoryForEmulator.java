@@ -66,4 +66,8 @@ public class PubSubSubscriberFactoryForEmulator implements PubSubSubscriberFacto
         return new BlockingGrpcPubSubSubscriber(
                 projectSubscriptionName, managedChannel, stub, pullRequest, retries, timeout);
     }
+
+    public PubSubSubscriber getSubscriber(Credentials credentials) throws IOException {
+        throw new IOException();
+    }
 }

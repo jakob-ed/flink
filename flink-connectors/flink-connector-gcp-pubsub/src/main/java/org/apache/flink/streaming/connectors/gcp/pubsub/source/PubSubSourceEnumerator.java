@@ -12,9 +12,12 @@ import java.util.List;
 public class PubSubSourceEnumerator
         implements SplitEnumerator<PubSubSplit, PubSubEnumeratorCheckpoint> {
     private final SplitEnumeratorContext<PubSubSplit> context;
+    private final String projectSubscriptionName;
 
-    public PubSubSourceEnumerator(SplitEnumeratorContext<PubSubSplit> context) {
+    public PubSubSourceEnumerator(
+            SplitEnumeratorContext<PubSubSplit> context, String projectSubscriptionName) {
         this.context = context;
+        this.projectSubscriptionName = projectSubscriptionName;
     }
 
     @Override
@@ -28,7 +31,7 @@ public class PubSubSourceEnumerator
 
     @Override
     public void addReader(int subtaskId) {
-        context.assignSplit(new PubSubSplit(), subtaskId);
+        context.assignSplit(new PubSubSplit(projectSubscriptionName), subtaskId);
     }
 
     @Override
