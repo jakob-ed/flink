@@ -1,0 +1,11 @@
+.git
+.idea
+**/target
+docs
+build-target
+tools
+lib
+flink-*
+!flink-parent.imi
+!flink-connectors/pom.xml
+!flink-connectors/flink-connector-gcp-pubsub
