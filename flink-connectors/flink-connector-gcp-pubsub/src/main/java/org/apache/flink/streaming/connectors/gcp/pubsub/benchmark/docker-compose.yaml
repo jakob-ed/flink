@@ -36,32 +36,27 @@ services:
 #    networks:
 #      - network
 
-  data-generator:
-    build:
-      # Set context to flink-connector-gcp-pubsub folder
-      context: ../../../../../../../../../../../../../
-#      context: ../../../../../../../../../../../
-      # Dockerfile location is relative to context that was passed previosuly
-      dockerfile: "flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
-#      dockerfile: "src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
-    command: [
-        "DataGenerator",
-        "--numTuples", "1000000",
-        "--sleepTime", "10", # in milliseconds
-        "--bufferSize", "2000",
-        "--port", "5001"
-    ]
-    ports:
-      - "5001:5001"
-    networks:
-      - network
-#    volumes:
-##      - type: volume
-##        source: /Users/j/.m2
-##        target: /root/.m2
-##        volume:
-##          nocopy: true
-#      - /Users/j/.m2:/root/.m2
+#  data-generator:
+#    build:
+#      # Set context to flink-connector-gcp-pubsub folder
+#      context: ../../../../../../../../../../../../../
+##      context: ../../../../../../../../../../../
+#      # Dockerfile location is relative to context that was passed previosuly
+#      dockerfile: "flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
+##      dockerfile: "src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
+#    command: [
+#        "DataGenerator",
+#        "--numTuples", "1000000",
+#        "--sleepTime", "10", # in milliseconds
+#        "--bufferSize", "2000",
+#        "--port", "5001"
+#    ]
+#    depends_on:
+#      - gcp-pubsub
+#    ports:
+#      - "5001:5001"
+#    networks:
+#      - network
 
 #  metrics-collector:
 #    build:
@@ -91,6 +86,17 @@ services:
 #      - "8000:8000"
 #    networks:
 #      - network
+
+  gcp-pubsub:
+    image: google/cloud-sdk:313.0.0
+    command: [
+      "sh",
+      "-c",
+      "mkdir -p /opt/data/pubsub ; gcloud beta emulators pubsub start --data-dir=/opt/data/pubsub --host-port=0.0.0.0:22222"]
+    ports:
+      - "22222:22222" # external:internal
+    networks:
+      - network
 
 networks:
   network: {}

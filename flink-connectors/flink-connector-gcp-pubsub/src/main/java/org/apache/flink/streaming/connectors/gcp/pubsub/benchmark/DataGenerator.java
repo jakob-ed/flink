@@ -20,7 +20,6 @@ package org.apache.flink.streaming.connectors.gcp.pubsub.benchmark;
 // import org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.generator.TupleGenerator;
 // import org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.generator.TupleSender;
 
-import org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.emulator.GCloudEmulatorManager;
 import org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.emulator.PubsubHelper;
 
 import com.google.api.gax.grpc.GrpcTransportChannel;
@@ -36,9 +35,6 @@ import picocli.CommandLine;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import static org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.emulator.GCloudEmulatorManager.getDockerIpAddress;
-import static org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.emulator.GCloudEmulatorManager.getDockerPubSubPort;
 
 @CommandLine.Command(
         name = "DataGenerator",
@@ -68,10 +64,17 @@ public class DataGenerator implements Callable<Integer> {
     private Integer bufferSize;
 
     @CommandLine.Option(
+            names = "--host",
+            required = true,
+            description = "The host.",
+            defaultValue = "127.0.0.1")
+    private String host;
+
+    @CommandLine.Option(
             names = "--port",
             required = true,
             description = "The port.",
-            defaultValue = "5001")
+            defaultValue = "22222")
     private Integer port;
 
     private static final String PROJECT_NAME = "benchmark-project";
@@ -111,23 +114,19 @@ public class DataGenerator implements Callable<Integer> {
     //        }
     //    }
 
-    private static void before() throws Exception {
-        GCloudEmulatorManager.launchDocker();
-
+    private void before() throws Exception {
         pubsubHelper = getPubsubHelper();
         pubsubHelper.createTopic(PROJECT_NAME, TOPIC_NAME);
         pubsubHelper.createSubscription(PROJECT_NAME, SUBSCRIPTION_NAME, PROJECT_NAME, TOPIC_NAME);
     }
 
-    private static void after() throws Exception {
+    private void after() throws Exception {
         pubsubHelper.deleteSubscription(PROJECT_NAME, SUBSCRIPTION_NAME);
         pubsubHelper.deleteTopic(PROJECT_NAME, TOPIC_NAME);
 
         channel.shutdownNow();
         channel.awaitTermination(1, TimeUnit.MINUTES);
         channel = null;
-
-        GCloudEmulatorManager.terminateDocker();
     }
 
     @Override
@@ -156,7 +155,7 @@ public class DataGenerator implements Callable<Integer> {
         }
     }
 
-    public static PubsubHelper getPubsubHelper() {
+    public PubsubHelper getPubsubHelper() {
         if (channel == null) {
             //noinspection deprecation
             channel = ManagedChannelBuilder.forTarget(getPubSubHostPort()).usePlaintext().build();
@@ -166,7 +165,7 @@ public class DataGenerator implements Callable<Integer> {
         return new PubsubHelper(channelProvider);
     }
 
-    public static String getPubSubHostPort() {
-        return getDockerIpAddress() + ":" + getDockerPubSubPort();
+    public String getPubSubHostPort() {
+        return host + ":" + port;
     }
 }
