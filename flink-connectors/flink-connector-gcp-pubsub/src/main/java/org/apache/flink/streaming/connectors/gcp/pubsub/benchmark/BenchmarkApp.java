@@ -7,8 +7,9 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(
         name = "benchmark",
         mixinStandardHelpOptions = true,
-        subcommands = {DataGenerator.class
-            //                FlinkApp.class,
+        subcommands = {
+            DataGenerator.class,
+            FlinkApp.class,
             //                MetricsCollector.class
         },
         commandListHeading = "%nCommands:%n%n")

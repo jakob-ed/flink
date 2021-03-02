@@ -9,3 +9,5 @@ flink-*
 !flink-parent.imi
 !flink-connectors/pom.xml
 !flink-connectors/flink-connector-gcp-pubsub
+flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/docker-compose.yaml
+flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile

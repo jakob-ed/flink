@@ -15,48 +15,51 @@
   
 version: "3.9"
 services:
-#  flink-benchmark:
-#    build:
-#      # Set context to flink-connector-gcp-pubsub folder
-#      context: ../../../../../../../../../../../../
-#      dockerfile: "flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
-#    command: [
-#        "FlinkApp",
+  flink-benchmark:
+    build:
+      # Set context to flink-connector-gcp-pubsub folder
+      context: ../../../../../../../../../../../../../
+      dockerfile: "flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
+    command: [
+        "FlinkApp",
+        "--host", "gcp-pubsub"
 #        "--port", "5001",
 #        "--parallelism", "1",
 #        "--segmentSize", "10000",
 #        "--checkpointingInterval", "20000",  # Set checkpointing interval to 30s
 #        "--delay", "60000" # Wait 60s before trying to connect to pinot-cluster
-#    ]
-#    ports:
-#      - "8081:8081"
-#    depends_on:
-#      - data-generator
-#      - pinot-cluster
-#    networks:
-#      - network
+    ]
+    ports:
+      - "8081:8081"
+    depends_on:
+      - data-generator
+      - gcp-pubsub
+    networks:
+      - network
 
-#  data-generator:
-#    build:
-#      # Set context to flink-connector-gcp-pubsub folder
-#      context: ../../../../../../../../../../../../../
-##      context: ../../../../../../../../../../../
-#      # Dockerfile location is relative to context that was passed previosuly
-#      dockerfile: "flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
-##      dockerfile: "src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
-#    command: [
-#        "DataGenerator",
-#        "--numTuples", "1000000",
+  data-generator:
+    build:
+      # Set context to flink-connector-gcp-pubsub folder
+      context: ../../../../../../../../../../../../../
+#      context: ../../../../../../../../../../../
+      # Dockerfile location is relative to context that was passed previosuly
+      dockerfile: "flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
+#      dockerfile: "src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile"
+    command: [
+        "DataGenerator",
+        "--host", "gcp-pubsub",
+        "--numTuples", "10000",
 #        "--sleepTime", "10", # in milliseconds
-#        "--bufferSize", "2000",
+        "--bufferSize", "2000",
 #        "--port", "5001"
-#    ]
-#    depends_on:
-#      - gcp-pubsub
-#    ports:
-#      - "5001:5001"
-#    networks:
-#      - network
+    ]
+    depends_on:
+      - gcp-pubsub
+    # TODO: needed at all?
+    ports:
+      - "5001:5001"
+    networks:
+      - network
 
 #  metrics-collector:
 #    build:
@@ -75,15 +78,6 @@ services:
 #    depends_on:
 #      - pinot-cluster
 #      - flink-benchmark
-#    networks:
-#      - network
-
-#  pinot-cluster:
-#    image: apachepinot/pinot:0.6.0
-#    command: ["QuickStart", "-type", "batch"]
-#    ports:
-#      - "9000:9000"
-#      - "8000:8000"
 #    networks:
 #      - network
 

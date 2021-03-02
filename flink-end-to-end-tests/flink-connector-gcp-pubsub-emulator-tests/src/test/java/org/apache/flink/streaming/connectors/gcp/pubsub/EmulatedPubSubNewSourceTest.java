@@ -128,7 +128,6 @@ public class EmulatedPubSubNewSourceTest extends GCloudUnitTestBase {
         env.setParallelism(1);
         env.setRestartStrategy(RestartStrategies.noRestart());
 
-        // TODO: use builder
         PubSubSource<String> source =
                 PubSubSource.newBuilder()
                         .withDeserializationSchema(new SimpleStringSchemaWithStopMarkerDetection())

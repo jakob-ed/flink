@@ -38,7 +38,10 @@ public class PubSubSplitReader<T> implements SplitReader<Tuple2<T, Long>, PubSub
     public RecordsWithSplitIds<Tuple2<T, Long>> fetch() throws IOException {
         RecordsBySplits.Builder<Tuple2<T, Long>> recordsBySplits = new RecordsBySplits.Builder<>();
 
+        LOG.warn("fetch called");
+
         for (ReceivedMessage receivedMessage : subscriber.pull()) {
+            LOG.warn("got some messages");
             try {
                 deserializationSchema.deserialize(receivedMessage.getMessage(), collector);
                 collector

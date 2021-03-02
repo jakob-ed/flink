@@ -21,19 +21,20 @@ package org.apache.flink.streaming.connectors.gcp.pubsub.benchmark;
 // import org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.generator.TupleSender;
 
 import org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.emulator.PubsubHelper;
+import org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.generator.TupleGenerator;
+import org.apache.flink.streaming.connectors.gcp.pubsub.benchmark.generator.TupleSender;
 
 import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.cloud.pubsub.v1.Publisher;
-import com.google.protobuf.ByteString;
-import com.google.pubsub.v1.PubsubMessage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import picocli.CommandLine;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @CommandLine.Command(
@@ -46,7 +47,7 @@ public class DataGenerator implements Callable<Integer> {
             names = "--numTuples",
             required = true,
             description = "The overall number of tuples to send.",
-            defaultValue = "1000000")
+            defaultValue = "100")
     private Integer numTuples;
 
     @CommandLine.Option(
@@ -60,7 +61,7 @@ public class DataGenerator implements Callable<Integer> {
             names = "--bufferSize",
             required = true,
             description = "Size of tuples buffer.",
-            defaultValue = "2000")
+            defaultValue = "10")
     private Integer bufferSize;
 
     @CommandLine.Option(
@@ -77,52 +78,47 @@ public class DataGenerator implements Callable<Integer> {
             defaultValue = "22222")
     private Integer port;
 
-    private static final String PROJECT_NAME = "benchmark-project";
-    private static final String TOPIC_NAME = "benchmark-topic";
-    private static final String SUBSCRIPTION_NAME = "benchmark-subscription";
+    @CommandLine.Option(
+            names = "--ps-project",
+            required = true,
+            description = "The Pub/Sub project.",
+            defaultValue = "benchmark-project")
+    private String project;
+
+    @CommandLine.Option(
+            names = "--ps-topic",
+            required = true,
+            description = "The Pub/Sub topic.",
+            defaultValue = "benchmark-topic")
+    private String topic;
+
+    @CommandLine.Option(
+            names = "--ps-subscription",
+            required = true,
+            description = "The Pub/Sub project.",
+            defaultValue = "benchmark-subscription")
+    private String subscription;
+
+    @CommandLine.Option(
+            names = "--delay",
+            required = true,
+            description = "Startup delay in ms.",
+            defaultValue = "30000")
+    private Long delay;
 
     private static ManagedChannel channel = null;
     private static TransportChannelProvider channelProvider = null;
     private static PubsubHelper pubsubHelper;
 
-    //    @Override
-    //    public Integer call() {
-    //        BlockingQueue<String> buffer = new ArrayBlockingQueue<>(bufferSize);
-    //
-    //        try {
-    //            ServerSocket serverSocket = new ServerSocket(this.port);
-    //            serverSocket.setSoTimeout(900000);
-    //            System.out.println("Waiting for client on port " + serverSocket.getLocalPort() +
-    // "...");
-    //            Socket server = serverSocket.accept();
-    //            System.out.println("Just connected to " + server.getRemoteSocketAddress());
-    //            PrintWriter out = new PrintWriter(server.getOutputStream(), true);
-    //
-    //            Thread generator = new TupleGenerator(this.numTuples, this.sleepTime, buffer);
-    //            generator.start();
-    //
-    //            Thread sender = new TupleSender(buffer, this.numTuples, out, serverSocket);
-    //            sender.start();
-    //
-    //            generator.join();
-    //            sender.join();
-    //
-    //            return 0;
-    //        } catch (Exception e) {
-    //            e.printStackTrace();
-    //            return 1;
-    //        }
-    //    }
-
     private void before() throws Exception {
         pubsubHelper = getPubsubHelper();
-        pubsubHelper.createTopic(PROJECT_NAME, TOPIC_NAME);
-        pubsubHelper.createSubscription(PROJECT_NAME, SUBSCRIPTION_NAME, PROJECT_NAME, TOPIC_NAME);
+        pubsubHelper.createTopic(project, topic);
+        pubsubHelper.createSubscription(project, subscription, project, topic);
     }
 
     private void after() throws Exception {
-        pubsubHelper.deleteSubscription(PROJECT_NAME, SUBSCRIPTION_NAME);
-        pubsubHelper.deleteTopic(PROJECT_NAME, TOPIC_NAME);
+        //        pubsubHelper.deleteSubscription(PROJECT_NAME, SUBSCRIPTION_NAME);
+        //        pubsubHelper.deleteTopic(PROJECT_NAME, TOPIC_NAME);
 
         channel.shutdownNow();
         channel.awaitTermination(1, TimeUnit.MINUTES);
@@ -131,21 +127,39 @@ public class DataGenerator implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        System.out.println("started");
+        BlockingQueue<String> buffer = new ArrayBlockingQueue<>(bufferSize);
+
         try {
             before();
 
-            Publisher publisher = pubsubHelper.createPublisher(PROJECT_NAME, TOPIC_NAME);
-            try {
-                publisher
-                        .publish(
-                                PubsubMessage.newBuilder()
-                                        .setData(ByteString.copyFromUtf8("hello world"))
-                                        .build())
-                        .get();
-                System.out.println("Publication complete?!");
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
+            Publisher publisher = pubsubHelper.createPublisher(project, topic);
+
+            //                        try {
+            //                            publisher
+            //                                    .publish(
+            //                                            PubsubMessage.newBuilder()
+            //
+            // .setData(ByteString.copyFromUtf8("hello
+            //             world"))
+            //                                                    .build())
+            //                                    .get();
+            //                            System.out.println("Publication complete?!");
+            //                        } catch (InterruptedException | ExecutionException e) {
+            //                            e.printStackTrace();
+            //                        }
+
+            Thread.sleep(delay);
+
+            Thread generator = new TupleGenerator(this.numTuples, this.sleepTime, buffer);
+            generator.start();
+
+            Thread sender = new TupleSender(buffer, this.numTuples, publisher);
+            sender.start();
+
+            System.out.println("joining");
+            generator.join();
+            sender.join();
 
             after();
             return 0;
