@@ -1,0 +1,90 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+  
+version: "3.9"
+services:
+  flink-benchmark:
+    image: "jakobed/flink-gcp-pubsub-benchmark:latest"
+    command: [
+        "FlinkApp",
+        "--host", "gcp-pubsub"
+#        "--port", "5001",
+#        "--parallelism", "1",
+#        "--segmentSize", "10000",
+#        "--checkpointingInterval", "20000",  # Set checkpointing interval to 30s
+#        "--delay", "60000" # Wait 60s before trying to connect to pinot-cluster
+    ]
+    ports:
+      - "8081:8081"
+    depends_on:
+      - data-generator
+      - gcp-pubsub
+    networks:
+      - network
+
+  data-generator:
+    image: "jakobed/flink-gcp-pubsub-benchmark:latest"
+    command: [
+        "DataGenerator",
+        "--host", "gcp-pubsub",
+        "--numTuples", "10000",
+#        "--sleepTime", "10", # in milliseconds
+        "--bufferSize", "2000",
+#        "--port", "5001"
+    ]
+    depends_on:
+      - gcp-pubsub
+    # TODO: needed at all?
+    ports:
+      - "5001:5001"
+    networks:
+      - network
+
+#  metrics-collector:
+#    build:
+#      # Set context to flink-connector-pinot folder
+#      context: ../../../../../../../../../../../
+#      dockerfile: "flink-connector-pinot/src/main/java/org/apache/flink/streaming/connectors/pinot/benchmark/Dockerfile"
+#    command: [
+#        "MetricsCollector",
+#        "--numTuples", "1000000",
+#        "--segmentSize", "10000",
+#        "--checkpointingInterval", "20000",  # Set checkpointing interval to 30s
+#        "--delay", "80000" # Wait 80s before trying to connect to pinot-cluster
+#    ]
+#    volumes:
+#      - ~/collected-metrics:/collected-metrics
+#    depends_on:
+#      - pinot-cluster
+#      - flink-benchmark
+#    networks:
+#      - network
+
+  gcp-pubsub:
+    image: google/cloud-sdk:313.0.0
+    command: [
+      "sh",
+      "-c",
+      "mkdir -p /opt/data/pubsub ; gcloud beta emulators pubsub start --data-dir=/opt/data/pubsub --host-port=0.0.0.0:22222"]
+    ports:
+      - "22222:22222" # external:internal
+    networks:
+      - network
+
+networks:
+  network: {}
+
+#volumes:
+#  "/Users/j/.m2": "/root/.m2"
