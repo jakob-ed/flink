@@ -76,7 +76,8 @@ public class Event implements Serializable {
         String price = Float.toString(finalX);
 
         BenchmarkEvent e =
-                new BenchmarkEvent(price, geo, System.currentTimeMillis(), Long.MAX_VALUE);
+                new BenchmarkEvent(
+                        price, geo, System.currentTimeMillis(), Long.MAX_VALUE, Long.MAX_VALUE);
         return objectMapper.writeValueAsString(e);
     }
 }

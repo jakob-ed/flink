@@ -19,11 +19,10 @@ package org.apache.flink.streaming.connectors.gcp.pubsub.benchmark;
 
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.gcp.pubsub.emulator.EmulatorCredentials;
 import org.apache.flink.streaming.connectors.gcp.pubsub.emulator.PubSubSubscriberFactoryForEmulator;
 import org.apache.flink.streaming.connectors.gcp.pubsub.source.PubSubSource;
@@ -31,6 +30,7 @@ import org.apache.flink.streaming.connectors.gcp.pubsub.source.PubSubSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import picocli.CommandLine;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -117,10 +117,10 @@ public class FlinkApp implements Callable<Integer> {
         ObjectMapper objectMapper = new ObjectMapper();
 
         // TODO: use ..<BenchmarkEvent> ?
-        PubSubSource<String> source =
+        PubSubSource<BenchmarkEvent> source =
                 PubSubSource.newBuilder()
                         // TODO: different schema? how to do deserialization efficiently? avro?
-                        .withDeserializationSchema(new SimpleStringSchema())
+                        .withDeserializationSchema(new BenchmarkEventSerDe())
                         .withProjectName(project)
                         .withSubscriptionName(subscription)
                         .withCredentials(EmulatorCredentials.getInstance())
@@ -137,22 +137,43 @@ public class FlinkApp implements Callable<Integer> {
                         .setProps(new Properties())
                         .build();
 
-        DataStream<Integer> dataStream =
+        DataStream<BenchmarkEvent> dataStream =
                 env.fromSource(source, WatermarkStrategy.noWatermarks(), "pubsub-source")
-                        .map(message -> objectMapper.readValue(message, BenchmarkEvent.class))
+                        //                        .map(message -> objectMapper.readValue(message,
+                        // BenchmarkEvent.class))
+                        //                        .map(
+                        //                                message -> {
+                        //                                    //
+                        //                                    //
+                        // message.setProcessingTime(System.currentTimeMillis());
+                        //                                    return message;
+                        //                                })
                         .map(
                                 message -> {
-                                    System.out.println("received " + message);
-                                    return message;
-                                })
-                        .map(message -> 1)
-                        .timeWindowAll(Time.seconds(5))
-                        .reduce(Integer::sum)
-                        .map(
-                                message -> {
-                                    System.out.println("current count " + message);
+                                    //                                    System.out.println(
+                                    //                                            "received a
+                                    // message, eventTime: "
+                                    //                                                    +
+                                    // message.getEventTime()
+                                    //                                                    + "
+                                    // ingestionTime: "
+                                    //                                                    +
+                                    // message.getIngestionTime()
+                                    //                                                    + "
+                                    // processingTime: "
+                                    //                                                    +
+                                    // message.getProcessingTime());
                                     return message;
                                 });
+        //                        TimeStampAssigner?!
+        //                        .map(message -> 1)
+        //                        .timeWindowAll(Time.seconds(5))
+        //                        .reduce(Integer::sum)
+        //                        .map(
+        //                                message -> {
+        //                                    System.out.println("current count " + message);
+        //                                    return message;
+        //                                });
 
         //        this.setupSource(env)
         //                .map(message -> JsonUtils.stringToObject(message, BenchmarkEvent.class))
@@ -282,5 +303,58 @@ public class FlinkApp implements Callable<Integer> {
 
     public String getPubSubHostPort() {
         return host + ":" + port;
+    }
+
+    private class BenchmarkEventSerDe extends AbstractDeserializationSchema<BenchmarkEvent> {
+        private static final long serialVersionUID = 1L;
+        private final ObjectMapper objectMapper;
+
+        public BenchmarkEventSerDe() {
+            super();
+            objectMapper = new ObjectMapper();
+        }
+
+        //        @Override
+        //        public byte[] serialize(BenchmarkEvent element) {
+        //            // will be unused anyways
+        //            return new byte[0];
+        //        }
+
+        @Override
+        public BenchmarkEvent deserialize(byte[] message) {
+            long ingestionTime = System.currentTimeMillis();
+            String messageString = new String(message, StandardCharsets.UTF_8);
+            try {
+                // TODO: read right away from Byte?
+                BenchmarkEvent event = objectMapper.readValue(messageString, BenchmarkEvent.class);
+                event.setIngestionTime(ingestionTime);
+                return event;
+            } catch (Exception e) {
+                return null;
+            }
+        }
+
+        @Override
+        public boolean isEndOfStream(BenchmarkEvent nextElement) {
+            return false;
+        }
+
+        //        @Override
+        //        public TypeInformation<BenchmarkEvent> getProducedType() {
+        //            System.out.println("TODO: this was called");
+        //            return null;
+        //        }
+
+        //        @Override
+        //        public TypeInformation<BenchmarkEvent> getProducedType() {
+        //            return new BenchmarkEventTypeInfo<>();
+        //            //            return new GenericTypeInfo<>(BenchmarkEvent.class);
+        //            //            return new BasicTypeInfo<BenchmarkEvent>(
+        //            //                    BenchmarkEvent.class,
+        //            //                    new Class<?>[] {},
+        //            //                    new BenchmarkEventSerDe(),
+        //            //                    //                    this is not right of course...
+        //            //                    BooleanComparator.class);
+        //        }
     }
 }

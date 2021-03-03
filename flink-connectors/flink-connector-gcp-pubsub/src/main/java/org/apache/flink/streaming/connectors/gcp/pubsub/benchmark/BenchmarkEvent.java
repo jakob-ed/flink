@@ -23,17 +23,20 @@ public class BenchmarkEvent {
     private String value;
     private String key;
     private long eventTime;
-    private long flinkSourceTime;
+    private long processingTime;
+    private long ingestionTime;
 
     public BenchmarkEvent(
             @JsonProperty(value = "value", required = true) String value,
             @JsonProperty(value = "key", required = true) String key,
             @JsonProperty(value = "eventTime", required = true) long eventTime,
-            @JsonProperty(value = "flinkSourceTime", required = true) long flinkSourceTime) {
+            @JsonProperty(value = "processingTime", required = true) long processingTime,
+            @JsonProperty(value = "ingestionTime", required = true) long ingestionTime) {
         this.value = value;
         this.key = key;
         this.eventTime = eventTime;
-        this.flinkSourceTime = flinkSourceTime;
+        this.processingTime = processingTime;
+        this.ingestionTime = ingestionTime;
     }
 
     @JsonProperty("value")
@@ -63,12 +66,21 @@ public class BenchmarkEvent {
         this.eventTime = eventTime;
     }
 
-    @JsonProperty("flinkSourceTime")
-    public long getFlinkSourceTime() {
-        return flinkSourceTime;
+    @JsonProperty("processingTime")
+    public long getProcessingTime() {
+        return processingTime;
     }
 
-    public void setFlinkSourceTime(long flinkSourceTime) {
-        this.flinkSourceTime = flinkSourceTime;
+    public void setProcessingTime(long processingTime) {
+        this.processingTime = processingTime;
+    }
+
+    @JsonProperty("ingestionTime")
+    public long getIngestionTime() {
+        return ingestionTime;
+    }
+
+    public void setIngestionTime(long ingestionTime) {
+        this.ingestionTime = ingestionTime;
     }
 }
