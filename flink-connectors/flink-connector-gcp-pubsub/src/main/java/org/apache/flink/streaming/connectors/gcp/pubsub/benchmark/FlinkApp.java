@@ -20,6 +20,7 @@ package org.apache.flink.streaming.connectors.gcp.pubsub.benchmark;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.AbstractDeserializationSchema;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -117,10 +118,12 @@ public class FlinkApp implements Callable<Integer> {
         ObjectMapper objectMapper = new ObjectMapper();
 
         // TODO: use ..<BenchmarkEvent> ?
-        PubSubSource<BenchmarkEvent> source =
+        PubSubSource<String> source =
                 PubSubSource.newBuilder()
                         // TODO: different schema? how to do deserialization efficiently? avro?
-                        .withDeserializationSchema(new BenchmarkEventSerDe())
+                        //                        .withDeserializationSchema(new
+                        // BenchmarkEventSerDe())
+                        .withDeserializationSchema(new SimpleStringSchema())
                         .withProjectName(project)
                         .withSubscriptionName(subscription)
                         .withCredentials(EmulatorCredentials.getInstance())
@@ -139,30 +142,23 @@ public class FlinkApp implements Callable<Integer> {
 
         DataStream<BenchmarkEvent> dataStream =
                 env.fromSource(source, WatermarkStrategy.noWatermarks(), "pubsub-source")
-                        //                        .map(message -> objectMapper.readValue(message,
-                        // BenchmarkEvent.class))
-                        //                        .map(
-                        //                                message -> {
-                        //                                    //
-                        //                                    //
-                        // message.setProcessingTime(System.currentTimeMillis());
-                        //                                    return message;
-                        //                                })
+                        .map(message -> objectMapper.readValue(message, BenchmarkEvent.class))
                         .map(
                                 message -> {
-                                    //                                    System.out.println(
-                                    //                                            "received a
-                                    // message, eventTime: "
-                                    //                                                    +
-                                    // message.getEventTime()
-                                    //                                                    + "
-                                    // ingestionTime: "
-                                    //                                                    +
-                                    // message.getIngestionTime()
-                                    //                                                    + "
-                                    // processingTime: "
-                                    //                                                    +
-                                    // message.getProcessingTime());
+                                    //
+                                    //
+                                    message.setProcessingTime(System.currentTimeMillis());
+                                    return message;
+                                })
+                        .map(
+                                message -> {
+                                    System.out.println(
+                                            "received a message, eventTime: "
+                                                    + message.getEventTime()
+                                                    + " ingestionTime: "
+                                                    + message.getIngestionTime()
+                                                    + " processingTime: "
+                                                    + message.getProcessingTime());
                                     return message;
                                 });
         //                        TimeStampAssigner?!
