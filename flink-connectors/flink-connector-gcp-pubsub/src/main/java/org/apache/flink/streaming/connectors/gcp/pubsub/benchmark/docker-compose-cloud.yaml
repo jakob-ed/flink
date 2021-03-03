@@ -31,6 +31,8 @@ services:
     depends_on:
       - data-generator
       - gcp-pubsub
+    volumes:
+      - /home/jakob_edding/collected-metrics:/collected-metrics
     networks:
       - network
 

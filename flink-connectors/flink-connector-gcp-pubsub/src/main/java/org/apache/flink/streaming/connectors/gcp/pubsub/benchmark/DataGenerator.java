@@ -54,7 +54,7 @@ public class DataGenerator implements Callable<Integer> {
             names = "--sleepTime",
             required = true,
             description = "Time to sleep between tuple send.",
-            defaultValue = "10")
+            defaultValue = "0")
     private Long sleepTime;
 
     @CommandLine.Option(
@@ -149,7 +149,9 @@ public class DataGenerator implements Callable<Integer> {
             //                            e.printStackTrace();
             //                        }
 
+            System.out.println("time before " + System.currentTimeMillis());
             Thread.sleep(delay);
+            System.out.println("time after " + System.currentTimeMillis());
 
             Thread generator = new TupleGenerator(this.numTuples, this.sleepTime, buffer);
             generator.start();
