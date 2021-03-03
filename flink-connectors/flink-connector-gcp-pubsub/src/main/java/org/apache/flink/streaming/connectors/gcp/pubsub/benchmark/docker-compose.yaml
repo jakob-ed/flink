@@ -34,6 +34,8 @@ services:
     depends_on:
       - data-generator
       - gcp-pubsub
+    volumes:
+      - ~/collected-metrics:/collected-metrics
     networks:
       - network
 

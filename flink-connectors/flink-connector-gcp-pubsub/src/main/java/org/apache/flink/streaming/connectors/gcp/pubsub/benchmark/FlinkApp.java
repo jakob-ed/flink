@@ -27,6 +27,8 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.gcp.pubsub.emulator.EmulatorCredentials;
 import org.apache.flink.streaming.connectors.gcp.pubsub.emulator.PubSubSubscriberFactoryForEmulator;
 import org.apache.flink.streaming.connectors.gcp.pubsub.source.PubSubSource;
+import org.apache.flink.table.sinks.CsvTableSink;
+import org.apache.flink.types.Row;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import picocli.CommandLine;
@@ -95,6 +97,27 @@ public class FlinkApp implements Callable<Integer> {
     private String subscription;
 
     @CommandLine.Option(
+            names = "--ps-num-retries",
+            required = true,
+            description = "Number of retries per Pub/Sub message.",
+            defaultValue = "2")
+    private int numRetries;
+
+    @CommandLine.Option(
+            names = "--ps-timeout",
+            required = true,
+            description = "The Pub/Sub timeout / ack Deadline length in ms.",
+            defaultValue = "1000")
+    private long timeout;
+
+    @CommandLine.Option(
+            names = "--ps-max-messages-per-pull",
+            required = true,
+            description = "The Pub/Sub max messages per pull.",
+            defaultValue = "3")
+    private int maxMessagesPerPull;
+
+    @CommandLine.Option(
             names = "--delay",
             required = true,
             description = "Startup delay.",
@@ -132,15 +155,14 @@ public class FlinkApp implements Callable<Integer> {
                                         getPubSubHostPort(),
                                         project,
                                         subscription,
-                                        // 10,
-                                        2,
-                                        Duration.ofSeconds(1), // timeout
-                                        3))
+                                        numRetries,
+                                        Duration.ofMillis(timeout),
+                                        maxMessagesPerPull))
                         // TODOI: necessary?
                         .setProps(new Properties())
                         .build();
 
-        DataStream<BenchmarkEvent> dataStream =
+        DataStream<Row> dataStream =
                 env.fromSource(source, WatermarkStrategy.noWatermarks(), "pubsub-source")
                         .map(message -> objectMapper.readValue(message, BenchmarkEvent.class))
                         .map(
@@ -150,17 +172,29 @@ public class FlinkApp implements Callable<Integer> {
                                     message.setProcessingTime(System.currentTimeMillis());
                                     return message;
                                 })
+                        //                        .map(
+                        //                                message -> {
+                        //                                    System.out.println(
+                        //                                            "received a message,
+                        // eventTime: "
+                        //                                                    +
+                        // message.getEventTime()
+                        //                                                    + " ingestionTime: "
+                        //                                                    +
+                        // message.getIngestionTime()
+                        //                                                    + " processingTime: "
+                        //                                                    +
+                        // message.getProcessingTime());
+                        //                                    return message;
+                        //                                })
                         .map(
                                 message -> {
-                                    System.out.println(
-                                            "received a message, eventTime: "
-                                                    + message.getEventTime()
-                                                    + " ingestionTime: "
-                                                    + message.getIngestionTime()
-                                                    + " processingTime: "
-                                                    + message.getProcessingTime());
-                                    return message;
+                                    return Row.of(
+                                            message.getEventTime(), message.getProcessingTime());
                                 });
+
+        new CsvTableSink("/collected-metrics/results-" + System.currentTimeMillis() + ".csv")
+                .consumeDataStream(dataStream);
         //                        TimeStampAssigner?!
         //                        .map(message -> 1)
         //                        .timeWindowAll(Time.seconds(5))
