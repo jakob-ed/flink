@@ -19,9 +19,12 @@ services:
     image: "jakobed/flink-gcp-pubsub-benchmark:latest"
     command: [
         "FlinkApp",
-        "--host", "gcp-pubsub"
-#        "--port", "5001",
-#        "--parallelism", "1",
+        "--host", "gcp-pubsub",
+        "--parallelism", "1",
+        "--checkpointingInterval", "500",
+        "--ps-num-retries", "2",
+        "--ps-timeout", "2000",
+        "--ps-max-messages-per-pull", "1000",
 #        "--segmentSize", "10000",
 #        "--checkpointingInterval", "20000",  # Set checkpointing interval to 30s
 #        "--delay", "60000" # Wait 60s before trying to connect to pinot-cluster
@@ -41,10 +44,10 @@ services:
     command: [
         "DataGenerator",
         "--host", "gcp-pubsub",
-        "--numTuples", "10000",
-#        "--sleepTime", "10", # in milliseconds
+        "--numTuples", "100000",
+        "--sleepTime", "0", # in milliseconds
         "--bufferSize", "2000",
-#        "--port", "5001"
+        "--delay", "30000"
     ]
     depends_on:
       - gcp-pubsub
