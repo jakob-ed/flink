@@ -52,8 +52,10 @@ services:
         "--host", "gcp-pubsub",
         "--numTuples", "10000",
 #        "--sleepTime", "10", # in milliseconds
-        "--bufferSize", "2000",
+        "--bufferSize", "20000",
 #        "--port", "5001"
+#        TODO: remove again?!
+        "--delay", "5000"
     ]
     depends_on:
       - gcp-pubsub

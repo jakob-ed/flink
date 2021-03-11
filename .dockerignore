@@ -10,4 +10,8 @@ flink-*
 !flink-connectors/pom.xml
 !flink-connectors/flink-connector-gcp-pubsub
 flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/docker-compose.yaml
+flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/docker-compose-cloud.yaml
 flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/Dockerfile
+flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/results_analysis.ipynb
+flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/.ipynb_checkpoints
+flink-connectors/flink-connector-gcp-pubsub/src/main/java/org/apache/flink/streaming/connectors/gcp/pubsub/benchmark/collected-metrics

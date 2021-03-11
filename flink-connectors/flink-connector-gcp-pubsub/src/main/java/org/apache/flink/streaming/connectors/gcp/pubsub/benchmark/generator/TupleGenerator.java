@@ -85,5 +85,7 @@ public class TupleGenerator extends Thread {
         }
         long runtime = (currTime - System.currentTimeMillis()) / 1000;
         System.out.println("Benchmark producer data rate is " + tupleCount / runtime + " ps");
+        System.out.println("bufferSizeAtTime" + bufferSizeAtTime);
+        System.out.println("dataGenRate" + dataGenRate);
     }
 }

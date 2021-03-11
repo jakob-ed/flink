@@ -193,7 +193,7 @@ public class FlinkApp implements Callable<Integer> {
                                             message.getEventTime(), message.getProcessingTime());
                                 });
 
-        new CsvTableSink("/collected-metrics/results-" + System.currentTimeMillis() + ".csv")
+        new CsvTableSink("/collected-metrics/" + System.currentTimeMillis() + "/results.csv")
                 .consumeDataStream(dataStream);
         //                        TimeStampAssigner?!
         //                        .map(message -> 1)
@@ -214,8 +214,8 @@ public class FlinkApp implements Callable<Integer> {
         //                        });
         //        this.setupSink(dataStream);
 
-        // Wait before trying to connect to the Pinot controller
-        //        Thread.sleep(delay);
+        // Wait before trying to connect Pub/Sub
+        Thread.sleep(delay);
 
         //        this.setupPinot();
 

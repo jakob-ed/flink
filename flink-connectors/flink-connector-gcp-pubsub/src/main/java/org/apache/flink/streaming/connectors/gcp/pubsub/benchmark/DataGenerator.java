@@ -32,6 +32,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import picocli.CommandLine;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -106,6 +108,13 @@ public class DataGenerator implements Callable<Integer> {
             defaultValue = "30000")
     private Long delay;
 
+    @CommandLine.Option(
+            names = "--numSenderThreads",
+            required = true,
+            description = "Number of threads used to publish messages to Pub/Sub",
+            defaultValue = "4")
+    private int numberOfSenderThreads;
+
     private static ManagedChannel channel = null;
     private static TransportChannelProvider channelProvider = null;
     private static PubsubHelper pubsubHelper;
@@ -133,7 +142,10 @@ public class DataGenerator implements Callable<Integer> {
         try {
             before();
 
-            Publisher publisher = pubsubHelper.createPublisher(project, topic);
+            List<Publisher> publishers = new ArrayList<>();
+            for (int i = 0; i < numberOfSenderThreads; i++) {
+                publishers.add(pubsubHelper.createPublisher(project, topic));
+            }
 
             //                        try {
             //                            publisher
@@ -149,19 +161,41 @@ public class DataGenerator implements Callable<Integer> {
             //                            e.printStackTrace();
             //                        }
 
-            System.out.println("time before " + System.currentTimeMillis());
+            System.out.println("Sleeping...");
             Thread.sleep(delay);
-            System.out.println("time after " + System.currentTimeMillis());
+            System.out.println("Slept.");
+
+            Long before = System.currentTimeMillis();
+            System.out.println("time before starting to generate " + before);
 
             Thread generator = new TupleGenerator(this.numTuples, this.sleepTime, buffer);
             generator.start();
 
-            Thread sender = new TupleSender(buffer, this.numTuples, publisher);
-            sender.start();
+            List<Thread> senderThreads = new ArrayList<>();
+            for (int i = 0; i < numberOfSenderThreads; i++) {
+                senderThreads.add(
+                        new TupleSender(
+                                buffer, this.numTuples / numberOfSenderThreads, publishers.get(i)));
+            }
+            //            start all async
+            for (Thread senderThread : senderThreads) {
+                senderThread.start();
+            }
+            //            block main thread until all threads have completed
+            for (Thread senderThread : senderThreads) {
+                senderThread.join();
+            }
 
             System.out.println("joining");
             generator.join();
-            sender.join();
+            //            sender.join();
+            Long after = System.currentTimeMillis();
+            System.out.println(
+                    "time after generating "
+                            + after
+                            + ", so it took "
+                            + (after - before) / 1000
+                            + "s");
 
             after();
             return 0;

@@ -27,6 +27,8 @@ WORKDIR /build/flink-connectors/flink-connector-gcp-pubsub
 
 RUN mvn dependency:go-offline
 
+RUN mvn dependency:resolve
+
 COPY flink-connectors/flink-connector-gcp-pubsub/src src
 #COPY src src
 #RUN mvn package -Dmaven.test.skip=true -Dfast -Dcheckstyle.skip -o

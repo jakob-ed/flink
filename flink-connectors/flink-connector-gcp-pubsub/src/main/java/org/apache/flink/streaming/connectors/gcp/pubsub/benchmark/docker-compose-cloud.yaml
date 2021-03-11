@@ -27,7 +27,8 @@ services:
         "--ps-max-messages-per-pull", "1000",
 #        "--segmentSize", "10000",
 #        "--checkpointingInterval", "20000",  # Set checkpointing interval to 30s
-#        "--delay", "60000" # Wait 60s before trying to connect to pinot-cluster
+#        "--delay", "300000" # Wait 300s before trying to connect Pub/Sub
+        "--delay", "5000"
     ]
     ports:
       - "8081:8081"
@@ -46,8 +47,8 @@ services:
         "--host", "gcp-pubsub",
         "--numTuples", "100000",
         "--sleepTime", "0", # in milliseconds
-        "--bufferSize", "2000",
-        "--delay", "30000"
+        "--bufferSize", "20000",
+        "--delay", "5000"
     ]
     depends_on:
       - gcp-pubsub

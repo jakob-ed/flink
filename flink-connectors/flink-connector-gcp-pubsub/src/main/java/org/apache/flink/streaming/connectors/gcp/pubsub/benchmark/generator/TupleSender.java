@@ -24,7 +24,6 @@ import com.google.pubsub.v1.PubsubMessage;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -33,7 +32,7 @@ public class TupleSender extends Thread {
     private final Logger logger = Logger.getLogger("MyLog");
     private final Publisher publisher;
     private final int tupleCount;
-    private final HashMap<Long, Integer> thoughputCount = new HashMap<>();
+    private final HashMap<Long, Integer> throughputCount = new HashMap<>();
 
     public TupleSender(BlockingQueue<String> buffer, int tupleCount, Publisher publisher) {
         this.buffer = buffer;
@@ -42,31 +41,40 @@ public class TupleSender extends Thread {
     }
 
     public void run() {
+        System.out.println("Run was called on one of the sender threads");
         try {
             long timeStart = System.currentTimeMillis();
 
             int tempVal = 0;
             for (int i = 0; i < tupleCount; i++) {
+                System.out.println("Buffersize as observed from Sender " + buffer.size());
                 String tuple = buffer.take();
 
-                try {
-                    publisher
-                            .publish(
-                                    PubsubMessage.newBuilder()
-                                            .setData(ByteString.copyFromUtf8(tuple))
-                                            .build())
-                            .get();
-                    logger.warning("Publication complete");
-                } catch (InterruptedException | ExecutionException e) {
-                    e.printStackTrace();
-                }
+                //                try {
+                //                    publisher
+                //                            .publish(
+                //                                    PubsubMessage.newBuilder()
+                //
+                // .setData(ByteString.copyFromUtf8(tuple))
+                //                                            .build())
+                //                            .get();
+                //                    //                    logger.warning("Publication complete");
+                //                } catch (InterruptedException | ExecutionException e) {
+                //                    e.printStackTrace();
+                //                }
+
+                publisher.publish(
+                        PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(tuple)).build());
+                //                        .get();
+
+                //                    logger.warning("Publication complete");
 
                 if (i % 1000 == 0) {
-                    thoughputCount.put(
+                    throughputCount.put(
                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             i - tempVal);
                     tempVal = i;
-                    logger.info(i + " tuples sent from buffer");
+                    logger.info(i + " tuples sent from buffer overall");
                 }
             }
             long timeEnd = System.currentTimeMillis();
@@ -84,6 +92,7 @@ public class TupleSender extends Thread {
             //            logger.info("Waiting for client on port " + serverSocket.getLocalPort() +
             // "...");
             //            Socket server = serverSocket.accept();
+            System.out.println("throughputCount" + throughputCount);
         } catch (Exception e) {
             e.printStackTrace();
         }
